@@ -12,7 +12,6 @@ import re
 import sys
 import pickle
 import os.path
-import pause
 
 from rich.console import Console
 from rich.table import Table
@@ -56,10 +55,10 @@ def get_voting(votemsg, desired_epochs):
     pt = r'time\=\"([0-9\-\:\s]+)\"'
     t = list(re.findall(pt,votemsg))[0].split(' ')[1]
     res['time'] = t
-    if res['epoch'] in attestations:
-      attestations[res['epoch']].append(res['pubKey'])
+    if res['pubKey'] in attestations:
+      attestations[res['pubKey']].append(res['epoch'])
     else:
-      attestations[res['epoch']] = [res['pubKey']]
+      attestations[res['pubKey']] = [res['epoch']]
     voting[f"{res['pubKey']}_{res['epoch']}"] = res
 
 def get_225_data(end_epoch):
@@ -83,7 +82,7 @@ def get_225_data(end_epoch):
   total_income=0
   total_loss=0
   print(f"Found {len(voting.keys())} items")
-  print(f"Found {len(attestations.keys())} epochs")
+  print(f"Found {len(attestations.keys())} validators")
   min_epoch=999999
   max_epoch=0
   for pubkey, vd in voting.items():
@@ -109,9 +108,9 @@ def get_225_data(end_epoch):
       min_epoch=min(min_epoch,int(vd['epoch']))
       max_epoch=max(max_epoch,int(vd['epoch']))
   avg_attestations=0
-  for epoch, validators in attestations.items():
-      avg_attestations += len(validators) / 200
-
+  for pubkey, epochs_attested in attestations.items():
+      avg_attestations += len(epochs_attested)
+  avg_attestations = avg_attestations / len(attestations.keys())
   return {'avg_att': avg_attestations, 'min_epoch': min_epoch, 'max_epoch': max_epoch, 'total_income': total_income, 'total_loss': total_loss, 'head': wrong_head, 'target': wrong_target, 'source': wrong_source, 'trifecta': wrong_trifecta}
 
 print("Welcome to 225 Report Generator")
@@ -133,7 +132,7 @@ if args.xdays >0:
       epoch=end_of_yesterday
 
 data=get_225_data(epoch)
-output=f"🧾 225 Report\nEpochs Covered: {data['min_epoch']}-{data['max_epoch']}\nAvg Att Per Epoch: {data['avg_att']:.2f}\nAtt. Income: {data['total_income']} ({data['total_income']/10**9:.3f} ETH)\nAtt. Loss: {data['total_loss']} ({data['total_loss']/10**9:.5f} ETH)\nW. Head: {data['head']}\nW. Target: {data['target']}\nW. Source: {data['source']}\nGood luck today!"
+output=f"🧾 225 Report\nEpochs Covered: {data['min_epoch']}-{data['max_epoch']}\nAvg Att Per Validator: {data['avg_att']:.2f}\nAtt. Income: {data['total_income']} ({data['total_income']/10**9:.3f} ETH)\nAtt. Loss: {data['total_loss']} ({data['total_loss']/10**9:.5f} ETH)\nW. Head: {data['head']}\nW. Target: {data['target']}\nW. Source: {data['source']}\nGood luck today!"
 # Ascii print
 table = Table(Column(header='data'), Column(header='val',justify='left'), title=":receipt: 225 Report", show_header=False, show_lines=True)
 table.add_row("Epochs Covered",f"{data['min_epoch']}-{data['max_epoch']} ({data['max_epoch']-data['min_epoch']+1})")
