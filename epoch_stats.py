@@ -27,24 +27,24 @@ def delta_epoch_type(x):
 parser=argparse.ArgumentParser(description='Get Vote Summary and Totals')
 parser.add_argument('--service-name',type=str,nargs='?',default='validator.service',help='Service name for journalctl')
 parser.add_argument('--build-indicesdb',action='store_true',default=False,help='Only biuld indices DB from initial startup logs')
+parser.add_argument('--build-indicesdb',action='store_true',default=False,help='Only biuld indices DB from initial startup logs')
+parser.add_argument('--epoch',type=int,nargs='?',help='Epoch number, or negative number for delta backwards from current epoch')
 group = parser.add_mutually_exclusive_group(required=False)
-egroup = parser.add_mutually_exclusive_group(required=False)
-egroup.add_argument('--epoch',type=int,nargs='?',help='Epoch number')
-egroup.add_argument('--delta-epoch',type=delta_epoch_type,nargs='?',help='How many epochs backwards, minimum is 3')
 group.add_argument('--bad',action='store_true',default=False,help='Show only bad votes')
 group.add_argument('--neg',action='store_true',default=False,help='Show only negative votes')
+group.add_argument('--missed',action='store_true',default=False,help='Show missed incorrect src and incorrect tgt')
 args = parser.parse_args()
 
 genesis=datetime.datetime(2020,12,1,12,0,23,0,tzinfo=timezone.utc)
-if args.epoch != None:
+if args.epoch != None and args.epoch>=0:
   prev_epoch = args.epoch
 else:
   now=datetime.datetime.utcnow()
   now=now.replace(tzinfo=timezone.utc)
   delta = now - genesis
   curr_epoch = math.floor(delta.total_seconds()/384)
-  if args.delta_epoch != None:
-    prev_epoch = curr_epoch - args.delta_epoch
+  if args.epoch != None and args.epoch<=-1:
+    prev_epoch = curr_epoch + args.epoch
   else:
     prev_epoch = curr_epoch - 2
 
@@ -205,6 +205,9 @@ for pubkey, vd in voting.items():
       continue
 
     if args.neg and new_bal-old_bal > 0:
+        continue
+
+    if args.missed and not (vd['correctlyVotedTarget'] == 'false' and vd['correctlyVotedSource'] == 'false'):
         continue
 
     rel_slot=str(int(duties[pubkey]['slot']) % 32)
