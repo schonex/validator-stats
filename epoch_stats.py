@@ -27,7 +27,6 @@ def delta_epoch_type(x):
 parser=argparse.ArgumentParser(description='Get Vote Summary and Totals')
 parser.add_argument('--service-name',type=str,nargs='?',default='validator.service',help='Service name for journalctl')
 parser.add_argument('--build-indicesdb',action='store_true',default=False,help='Only biuld indices DB from initial startup logs')
-parser.add_argument('--build-indicesdb',action='store_true',default=False,help='Only biuld indices DB from initial startup logs')
 parser.add_argument('--epoch',type=int,nargs='?',help='Epoch number, or negative number for delta backwards from current epoch')
 group = parser.add_mutually_exclusive_group(required=False)
 group.add_argument('--bad',action='store_true',default=False,help='Show only bad votes')
