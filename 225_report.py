@@ -79,6 +79,7 @@ def get_225_data(end_epoch):
   wrong_source=0
   wrong_target=0
   wrong_trifecta=0
+  wrong_srctgt=0
   total_income=0
   total_loss=0
   print(f"Found {len(voting.keys())} items")
@@ -104,6 +105,8 @@ def get_225_data(end_epoch):
           wrong_head += 1
       if vd['correctlyVotedTarget'] != "true" and vd['correctlyVotedSource'] != "true" and vd['correctlyVotedHead'] != "true":
           wrong_trifecta += 1
+      if vd['correctlyVotedTarget'] != "true" and vd['correctlyVotedSource'] != "true":
+          wrong_srctgt += 1
 
       min_epoch=min(min_epoch,int(vd['epoch']))
       max_epoch=max(max_epoch,int(vd['epoch']))
@@ -111,7 +114,7 @@ def get_225_data(end_epoch):
   for pubkey, epochs_attested in attestations.items():
       avg_attestations += len(epochs_attested)
   avg_attestations = avg_attestations / len(attestations.keys())
-  return {'avg_att': avg_attestations, 'min_epoch': min_epoch, 'max_epoch': max_epoch, 'total_income': total_income, 'total_loss': total_loss, 'head': wrong_head, 'target': wrong_target, 'source': wrong_source, 'trifecta': wrong_trifecta}
+  return {'avg_att': avg_attestations, 'min_epoch': min_epoch, 'max_epoch': max_epoch, 'total_income': total_income, 'total_loss': total_loss, 'head': wrong_head, 'target': wrong_target, 'source': wrong_source, 'trifecta': wrong_trifecta, 'srctgt': wrong_srctgt}
 
 print("Welcome to 225 Report Generator")
 now = datetime.datetime.utcnow()
@@ -132,7 +135,6 @@ if args.xdays >0:
       epoch=end_of_yesterday
 
 data=get_225_data(epoch)
-output=f"🧾 225 Report\nEpochs Covered: {data['min_epoch']}-{data['max_epoch']}\nAvg Att Per Validator: {data['avg_att']:.2f}\nAtt. Income: {data['total_income']} ({data['total_income']/10**9:.3f} ETH)\nAtt. Loss: {data['total_loss']} ({data['total_loss']/10**9:.5f} ETH)\nW. Head: {data['head']}\nW. Target: {data['target']}\nW. Source: {data['source']}\nGood luck today!"
 # Ascii print
 table = Table(Column(header='data'), Column(header='val',justify='left'), title=":receipt: 225 Report", show_header=False, show_lines=True)
 table.add_row("Epochs Covered",f"{data['min_epoch']}-{data['max_epoch']} ({data['max_epoch']-data['min_epoch']+1})")
@@ -143,7 +145,7 @@ table.add_row("Wrong Heads",f"{data['head']}")
 table.add_row("Wrong Target",f"{data['target']}")
 table.add_row("Wrong Source",f"{data['source']}")
 table.add_row("Wrong hd+tgt+src",f"{data['trifecta']}")
-
+table.add_row("Wrong hd+src",f"{data['srctgt']}")
 table.box=box.ASCII
 
 console = Console(color_system=None)
